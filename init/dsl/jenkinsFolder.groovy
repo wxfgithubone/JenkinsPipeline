@@ -1,0 +1,1 @@
+folder("${params.Department}-${env.GitGroup}-${params.Environment}")

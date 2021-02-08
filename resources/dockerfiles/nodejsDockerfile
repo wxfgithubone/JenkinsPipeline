@@ -1,0 +1,5 @@
+FROM ${harbor}/wekube/node-pm2:${nodejsVersion}
+LABEL maintainer=${creator}
+WORKDIR  /app
+COPY ./ /app/
+CMD ["pm2","start","pm2.config.js"]

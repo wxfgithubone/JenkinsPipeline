@@ -1,0 +1,328 @@
+#!groovy
+@Library('devops-sharelibrary@release-v2') _
+
+
+properties([gitLabConnection(''), [$class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false], parameters([[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择部门', filterLength: 1, filterable: true, name: 'Department', randomName: 'choice-parameter-623606125965381', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects"          
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        artifacts.add(item.name)
+    } 
+    return artifacts
+} catch (Exception e) {
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择kubernetes集群', filterLength: 1, filterable: true, name: 'Cluster', randomName: 'choice-parameter-623606127552285', referencedParameters: 'Department', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        if (Department.equals(item.name)) {
+            item.destinations.keySet().each{it -> artifacts +=it }
+            return artifacts
+        }
+    }
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择部署环境', filterLength: 1, filterable: true, name: 'Environment', randomName: 'choice-parameter-623606129108681', referencedParameters: 'Department,Cluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects" 
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        // artifacts.add(item.destinations.keySet().each())
+        if (Department.equals(item.name)) {
+            for ( key in item.destinations.keySet()) {
+                if (Cluster.equals(key)) {
+                    item.destinations.get(Cluster).each{it -> artifacts +=it }
+                    return artifacts
+                }
+            }
+        }
+    }
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}
+''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择helm仓库', filterLength: 1, filterable: true, name: 'SourceRepo', randomName: 'choice-parameter-623606130631632', referencedParameters: 'Department', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects" 
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        if (Department.equals(item.name)) {
+            item.source_repos.each{it -> artifacts +=it }
+            return artifacts
+        }
+    }
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '固定参数', filterLength: 1, filterable: false, name: 'KubernetesAPIServer', randomName: 'choice-parameter-623606132178839', referencedParameters: 'Cluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/clusters/n/${Cluster}"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def item = artifactsJsonObject.data.server
+    artifacts.add(item)
+    return artifacts
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '固定参数', filterLength: 1, filterable: false, name: 'ClusterCode', randomName: 'choice-parameter-623606133699168', referencedParameters: 'Cluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/clusters/n/${Cluster}"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def item = artifactsJsonObject.data.code
+    artifacts.add(item)
+    return artifacts
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], choice(choices: ['java', 'node', 'zip', 'go','python','h5','nodejs'], description: '请选择项目类型', name: 'ProjectType'), [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择项目类型对应的编译工具版本', filterLength: 1, filterable: false, name: 'Compiler_version', randomName: 'choice-parameter-623606135244706', referencedParameters: 'ProjectType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (ProjectType.equals("java")) {
+    return ["maven-3.5.4"]
+} else if  (ProjectType.equals("zip")) {
+    return ["maven-3.5.4"]
+} else if (ProjectType.matches("node|nodejs")) {
+    return ["8.16.1","10.16.3"]
+} else if (ProjectType.equals("python")) {
+    return ["3.6.3","3.7.6"]
+}''']]],[$class: 'CascadeChoiceParameter', choiceType: 'PT_CHECKBOX', description: '', filterLength: 1, filterable: false, name: 'PythonRunMethod', randomName: 'choice-parameter-23673146933766381', referencedParameters: 'ProjectType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (ProjectType.equals("python")) {
+    return["webserver","task","beat"]
+}''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '请输入go项目编译根目录', name: 'GoRootDir', omitValueField: true, randomName: 'choice-parameter-623606136783301', referencedParameters: 'ProjectType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (ProjectType.equals("go")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], string(defaultValue: '', description: '请输入完整ssh格式git仓库地址,例如：git@git.devops.net:devops/pipeline.git', name: 'ProjectRepo', trim: true), string(defaultValue: '', description: '请输入项目编译的git模块名称，java项目填写编译目录，没有模块不填写', name: 'ProjectModule', trim: true), string(defaultValue: '', description: '*请输入功能名，用于组成argocd app名称', name: 'ServiceName', trim: true), string(defaultValue: '', description: '请输入包名，java项目的jar或war包，node项目的build或dist目录', name: 'PackageName', trim: true), string(defaultValue: '8080', description: '端口号，k8s项目默认8080', name: 'ProjectPort', trim: true), string(defaultValue: '1', description: '请输入部署到k8s中的副本数量', name: 'Replicaset', trim: true),[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '选择是否使用apollo', filterLength: 1, filterable: false, name: 'Apollo', randomName: 'choice-parameter-8464987614856097', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: 'return["true","false"]']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择Apollo的meta地址', filterLength: 1, filterable: false, name: 'ApolloMetaServer', randomName: 'choice-parameter-623606151737265', referencedParameters: 'Environment,Apollo', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''
+if (Apollo.equals("true")) {
+    if (Environment.matches("test.*|dev.*|sun|tue")){
+    return ["http://apollo-meta-fat.svc.devops.net:8080","http://apollo-meta-fat-apac.svc.devops.net:8080"]
+    } else if (Environment.matches("prod|release")) {
+    return ["http://apollo-meta-pro.svc.devops.net:8080","http://apollo-meta-pro-apac.svc.devops.net:8070"]
+    } else if (Environment.matches("stage|preprod")) {
+    return ["http://apollo-meta-uat.svc.devops.net:8080","http://apollo-meta-uat-apac.svc.devops.net:8090"]
+    }
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: false, name: 'ApolloEnv', randomName: 'choice-parameter-939779898974386', referencedParameters: 'Environment,Apollo', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Apollo.equals("true")) {
+    if (Environment.matches("test.*|dev.*|sun|tue")){
+        return ["FAT","DEV"]
+    } else if (Environment.matches("prod|release")) {
+        return ["PRO"]
+    } else if (Environment.matches("preprod|stage")) {
+        return ["UAT"]
+    }
+}''']]],[$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '如果apollo使用了IDC，请选择对应的IDC环境', filterLength: 1, filterable: false, name: 'ApolloIDC', randomName: 'choice-parameter-8466780717443341', referencedParameters: 'Apollo,Department', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Apollo.equals("true")) {
+    if (Department.equals("devops2")) {
+        return["default","aliyun"]
+    } else {
+        return["default","vietnam"]
+    }
+}''']]], [$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择是否启用健康接口检测', filterLength: 1, filterable: false, name: 'HealthCheck', randomName: 'choice-parameter-623606153519948', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: 'return[true,false]']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '如果启用健康接口检测，请填写健康接口地址', name: 'HealthCheckUrl', omitValueField: true, randomName: 'choice-parameter-623606155315285', referencedParameters: 'HealthCheck', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (HealthCheck.equals("true")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '请设置Java堆内存（例：512M）', name: 'JVM', omitValueField: true, randomName: 'choice-parameter-623606157014236', referencedParameters: 'ProjectType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if(ProjectType.matches('java|zip')){
+   inputBox = "<input name=\'value\' class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], [$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择是否启用域名访问', filterLength: 1, filterable: false, name: 'Ingress', randomName: 'choice-parameter-623606158677799', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: 'return[false,true]']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: false, name: 'IngressInternalType', randomName: 'choice-parameter-1896075456445130', referencedParameters: 'Ingress', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Ingress.equals(\'true\')) {
+    return["false","true"]
+}''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '''内部解析地址: (Internal):
+格式：域名1:接口1;接口2;......,域名2......
+例：xxx.devops.com:/api1;/api2,yyy.devops.net:/api1;/api2''', name: 'IngressInternalHosts', omitValueField: true, randomName: 'choice-parameter-1896075469206976', referencedParameters: 'IngressInternalType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (IngressInternalType.equals("true")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: false, name: 'IngressPublicType', randomName: 'choice-parameter-1896075471404252', referencedParameters: 'Ingress', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Ingress.equals(\'true\')) {
+    return["false","true"]
+}''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '', name: 'IngressPublicHosts', omitValueField: true, randomName: 'choice-parameter-1896075483637383', referencedParameters: 'IngressPublicType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (IngressPublicType.equals("true")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: false, name: 'IngressExternalType', randomName: 'choice-parameter-2516091448337375', referencedParameters: 'Ingress', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Ingress.equals(\'true\')) {
+    return[\'false\',\'true\']
+}''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '''格式：域名1:接口1;接口2;......,域名2......
+例：xxx.devops.com:/api1;/api2,yyy.devops.net:/api1;/api2''', name: 'IngressExternalHosts', omitValueField: false, randomName: 'choice-parameter-2516091450190388', referencedParameters: 'IngressExternalType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (IngressExternalType.equals("true")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]],[$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择是否启用私有域名访问', filterLength: 1, filterable: false, name: 'IngressPrivateType', randomName: 'choice-parameter-3747969969407890', referencedParameters: 'Ingress', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Ingress.equals(\'true\')) {
+    return["false","true"]
+}''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '''私有解析地址: (Internal):
+格式：域名1:接口1;接口2;......,域名2......
+例：xxx.devops.com:/api1;/api2,yyy.devops.net:/api1;/api2''', name: 'IngressPrivateHosts', omitValueField: false, randomName: 'choice-parameter-3747969981552821', referencedParameters: 'IngressPrivateType', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (IngressPrivateType.equals("true")) {
+   inputBox = "<input name=\'value’, class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '设置是否启用k8s service，如果ingress启用，service默认开启；如果禁用ingress，请选择是否启用', filterLength: 1, filterable: false, name: 'K8sService', randomName: 'choice-parameter-623606163691037', referencedParameters: 'Ingress', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (Ingress.equals("true")) {
+    return ["true"]
+} else if  (Ingress.equals("false")) {
+    return ["false","true"]
+} ''']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '请设置服务service name，如果内部需要通过service访问，请指定service名\n如果不需要，请留空', name: 'K8sServiceName', omitValueField: true, randomName: 'choice-parameter-623606165417301', referencedParameters: 'K8sService', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (K8sService.equals("true")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]], [$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择是否启用kubernetes pod亲和性', filterLength: 1, filterable: false, name: 'K8sAffinity', randomName: 'choice-parameter-864631981612317', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: 'return[false,true]']]], [$class: 'DynamicReferenceParameter', choiceType: 'ET_FORMATTED_HTML', description: '请输入亲和性的键值对，多个使用逗号”，“区分，例如：key1:value1,key2,value2', name: 'K8sAffinityKVPairs', omitValueField: false, randomName: 'choice-parameter-23823284210602730', referencedParameters: 'K8sAffinity', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''if (K8sAffinity.equals("true")) {
+   inputBox = "<input name=\'value\', class=\'setting-input\' type=\'text\'>"
+   return inputBox
+}''']]],string(defaultValue: '10m', description: '设置服务容器CPU请求值，默认10m，(单位m)', name: 'K8sCpuRequest', trim: true), string(defaultValue: '512Mi', description: '设置服务容器内存请求值，默认512Mi，(单位Mi,Gi)', name: 'K8sMemoryRequest', trim: true),string(defaultValue: '1', description: '设置服务容器CPU最大限制值，默认1核', name: 'K8sCpuLimit', trim: true), string(defaultValue: '1Gi', description: '设置服务容器内存最大限制值，默认1Gi，单位(Mi,Gi)', name: 'K8sMemoryLimit', trim: true), choice(choices: ['https://wcr.wepeso.ph','https://wcr.devops.net','https://wcr.devops.net','https://wcr.devops.net'], description: '请选择镜像推送地址', name: 'HarborAddress'), choice(choices: ['argocd-wekube-prod.devops.net','argocd.devops.net','argocd-nonprod.devops.net'], description: '请选择argocd集群', name: 'ArgoAddress'), [$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择是否启用sonarqube', filterLength: 1, filterable: false, name: 'SonarScan', randomName: 'choice-parameter-623606167070145', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: 'return["false","true"]']]],choice(choices: ['net/Jakarta', 'net/Shanghai','UTC'], description: '选择服务运行环境的时区', name: 'TimeZone')])])
+
+def HelmGitAddr
+def HelmGitGroup
+def HelmGitProj
+
+pipeline {
+    agent {
+        node {
+            label "${params.Cluster}"
+        }
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        disableConcurrentBuilds()
+    }
+    stages {
+        stage('Checking Parameters'){
+            steps {
+                script {
+                    if (!"${ProjectRepo}" || !"${ServiceName}") {
+                        currentBuild.result = 'ABORTED'
+                        error('Are you run for add parameters?')
+                    }
+                }
+            }
+        }
+        stage('Prepare Envs') {
+			steps {
+				script {
+                    sh "echo 'define some variables......'"
+                    env.GitGroup = "${params.ProjectRepo}".split(':|/')[1]
+                    env.GitProject = "${params.ProjectRepo}".split(':|/')[2]
+                    // 设置项目模块和编译时的模块路径
+                    env.JenkinsFolder = "${params.Department}-${params.Cluster}-${env.GitGroup}-${params.Environment}"
+                    (Kx,Ky,HelmGitAddr,HelmGitGroup,HelmGitProj) = "${params.SourceRepo}".split('/')
+                    env.HelmChartValueName = "${params.Department}-${params.ClusterCode}-${params.Environment}-${params.ServiceName}"
+                    // argo application 名称
+                    env.ApplicationName = "${params.Department}-${params.ClusterCode}-${params.Environment}-${params.ServiceName}"
+                    // 早先东南亚namespace命名不是 "部门-环境" 部署的时候要判断一下这些环境
+                    if ( "${params.Environment}" =~ 'release|devk8s|prodvn|sun|devvn|tue|thu|qavn' ) {
+                        env.K8sNamespace = "${params.Environment}"
+                    } else {
+                        env.K8sNamespace = "${params.Department}-${params.Environment}"
+                    }
+                    env.JenkinsJobName = "${env.JenkinsFolder}/${params.Department}-${params.ClusterCode}-${params.ProjectType}-${params.Environment}-${params.ServiceName}"
+                    ArgocdTokens = [
+                        "argocd.devops.net": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NzQzMzMwNDYsImlzcyI6ImFyZ29jZCIsIm5iZiI6MTU3NDMzMzA0Niwic3ViIjoiYWRtaW4ifQ.4t6tLkFYlfRHXSyEl3mnaJnveaiGRIZ6G_v53v_ivr8",
+                        "argocd-nonprod.devops.net": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NzI5NDA1NDIsImlzcyI6ImFyZ29jZCIsIm5iZiI6MTU3Mjk0MDU0Miwic3ViIjoiYWRtaW4ifQ.zeH2iu1hY5bNSYvwf71Mcp--eIKtVRkaboyVnV_ixWc"
+                    ]
+                    env.ArgocdToken = ArgocdTokens["${params.ArgoAddress}"]
+                    sh "echo ${env.ArgocdToken}"
+				}
+			}
+		}
+        stage('Create Jenkins Project View') {
+            steps {
+				script {
+                    jenkinsJobDsl.createView("${params.Department}")
+                }
+            }
+        }
+        // create folder for environment
+        stage('Create Jenkins Project Folder') {
+            steps {
+                script {
+                    jenkinsJobDsl.createFolder("${env.JenkinsFolder}")
+                }
+            }
+        }
+        // create a job for this project
+        stage('Create Jenkins Pipeline Job') {
+            steps {
+                script {
+                    jenkinsJobDsl.createJob("${env.JenkinsJobName}","${env.GitProject}")
+                }
+            }
+        }
+       stage('Create Helm Chart Value') {
+           steps {
+                dir("helm-chart") {
+                    git([url: "git@${HelmGitAddr}:${HelmGitGroup}/${HelmGitProj}", branch: 'master', credentialsId: 'devopsGit'])
+                    script {
+                        
+                        helmValue("${params.Department}","${params.Environment}","${params.ProjectType}","${params.HarborAddress}","${params.ProjectModule}","${params.ProjectPort}","${params.Apollo}","${params.ApolloEnv}","${params.ApolloMetaServer}","${params.Ingress}","${params.HealthCheck}","${params.HealthCheckUrl}","${params.JVM}","${env.HelmChartValueName}","${params.K8sAffinity}","${params.K8sAffinityKVPairs}","${params.K8sService}","${params.K8sServiceName}","${params.K8sCpuLimit}","${params.K8sMemoryLimit}","${params.K8sCpuRequest}","${params.K8sMemoryRequest}","${IngressInternalType }","${params.IngressPublicType}","${IngressInternalHosts}","${IngressPublicHosts}","${IngressExternalType}","${IngressExternalHosts}","${params.IngressPrivateType}","${params.IngressPrivateHosts}","${params.ApolloIDC}","${params.ServiceName}","${params.TimeZone}","${params.PythonRunMethod}")
+                    } 
+                }
+            }
+        }
+        stage('Push New Helm Chart Config') {
+            steps {
+                dir("helm-chart") {
+                    script{
+                        try{
+                            sshagent(['devopsGit']) {
+                                sh """
+                                    git config --global user.email "wangxingmin@example.com"
+                                    git config --global user.name "wangxingmin"
+                                    git add .
+                                    git commit -m 'add ${env.HelmChartValueName} values file'
+                                    git push --set-upstream origin master
+                                    git push -u origin master
+                                """
+                            }
+                        } catch (Exception e1) {
+                            println("nothing to commit")
+                        }
+                    }
+                }
+            }
+        }
+        stage("Create ArgoCD application") {
+            steps {
+                script {
+                    createArgoApp("${params.Department}","${params.ProjectType}","${params.ArgoAddress}","${env.ApplicationName}","${env.HelmChartValueName}","${params.KubernetesAPIServer}","${env.K8sNamespace}","${params.SourceRepo}","${env.ArgocdToken}")
+                }
+            }
+        }
+        stage("Store Parameters ") {
+            steps {
+                script {
+                    storeParameters.jenkinsInit("${params.Department}","${params.Cluster}","${params.ClusterCode}","${params.Environment}","${params.SourceRepo}",
+                                    "${params.KubernetesAPIServer}","${params.ProjectType}","${params.Compiler_version}","${params.ProjectRepo}","${params.ProjectModule}",
+                                    "${params.ServiceName}","${params.PackageName}","${params.ProjectPort}","${params.JVM}","${params.HealthCheckUrl}",
+                                    "${params.Ingress}","${params.IngressInternalType}","${params.IngressInternalHosts}","${params.IngressPublicType}","${params.IngressPublicHosts}",
+                                    "${IngressExternalType}","${IngressExternalHosts}","${params.IngressPrivateType}","${params.IngressPrivateHosts}",
+                                    "${params.K8sService}","${params.K8sServiceName}","${params.K8sAffinity}","${params.K8sAffinityKVPairs}","${params.Replicaset}",
+                                    "${params.K8sCpuRequest}","${params.K8sMemoryRequest}","${params.K8sCpuLimit}","${params.K8sMemoryLimit}","${params.Apollo}",
+                                    "${params.ApolloMetaServer}","${params.ApolloEnv}","${params.ApolloIDC}","${params.HarborAddress}","${params.ArgoAddress}",
+                                    "${env.JenkinsFolder}","${env.JenkinsJobName}","${env.HelmChartValueName}","${env.ApplicationName}","${env.K8sNamespace}","${params.GoRootDir}",
+                                    "${params.HealthCheck}","${params.TimeZone}","${params.PythonRunMethod}")
+                }
+            }
+        }
+        stage("Run New Job") {
+            steps {
+                build job: "${env.JenkinsJobName}", propagate: false, wait: false
+            }
+        }
+    }
+    post {
+        always {
+            // clean workspace
+            deleteDir()
+        }
+    }
+}
+

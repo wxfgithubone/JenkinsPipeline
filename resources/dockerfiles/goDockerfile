@@ -1,0 +1,16 @@
+FROM wcr.devops.net/wekube/go-version1.12.1-program-build-base:201907111853 as builder
+WORKDIR /go/src/${go_root_dir}/${git_project}
+COPY . .
+RUN ls -l /go/src/${go_root_dir}/${git_project}
+ADD https://devops-wangxingmin.oss-cn-shanghai.aliyuncs.com/scripts/k8s_estore_golang_control.sh /go/src/${go_root_dir}/${git_project}/k8s_estore_golang_control.sh 
+RUN /bin/sh /go/src/${go_root_dir}/${git_project}/k8s_estore_golang_control.sh ${projectenv} ${git_project} ${git_module}
+
+
+
+
+
+FROM wcr.devops.net/estore/alpine-with-cert-cst:201907171450
+WORKDIR /app/
+COPY --from=builder /go/src/${go_root_dir}/${git_project}/${git_project}-online .
+ADD https://devops-wangxingmin.oss-cn-shanghai.aliyuncs.com/scripts/k8s_estore_golang_control.sh .
+CMD ["/bin/sh","/app/k8s_estore_golang_control.sh","start","${git_project}"]

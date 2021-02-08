@@ -1,0 +1,10 @@
+FROM ${harbor}/wekube/openjdk:8u212-jdk
+
+LABEL maintainer=wangxingmin@devops.net
+ENV APP_HOME /app
+ENV APP_NAME ${app_name}
+ENV JAVA_OPTS=""
+RUN mkdir -p \${APP_HOME}
+WORKDIR \${APP_HOME}
+COPY target/\${APP_NAME} \${APP_HOME}/\${APP_NAME}
+CMD echo "java -jar \${JAVA_OPTS} \${JVMOPTS} \${BOOTOPTS} \${APP_NAME}" && java -jar \${JAVA_OPTS} \${JVMOPTS} \${BOOTOPTS} \${APP_NAME}

@@ -1,0 +1,292 @@
+#!groovy
+@Library('devops-sharelibrary@release-v2') _
+
+
+properties([gitLabConnection(''), [$class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false], parameters([[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择部门', filterLength: 1, filterable: true, name: 'Department', randomName: 'choice-parameter-623606125965381', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects"          
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        artifacts.add(item.name)
+    } 
+    return artifacts
+} catch (Exception e) {
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择kubernetes集群', filterLength: 1, filterable: true, name: 'Cluster', randomName: 'choice-parameter-623606127552285', referencedParameters: 'Department', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        if (Department.equals(item.name)) {
+            item.destinations.keySet().each{it -> artifacts +=it }
+            return artifacts
+        }
+    }
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]],[$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '请选择kubernetes集群', filterLength: 1, filterable: true, name: 'ToCluster', randomName: 'choice-parameter-623606137552285', referencedParameters: 'Department', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        if (Department.equals(item.name)) {
+            item.destinations.keySet().each{it -> artifacts +=it }
+            return artifacts
+        }
+    }
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '固定参数', filterLength: 1, filterable: false, name: 'ToKubernetesAPIServer', randomName: 'choice-parameter-623606132178839', referencedParameters: 'ToCluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/clusters/n/${ToCluster}"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def item = artifactsJsonObject.data.server
+    artifacts.add(item)
+    return artifacts
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '固定参数', filterLength: 1, filterable: false, name: 'ToClusterCode', randomName: 'choice-parameter-623606133699168', referencedParameters: 'ToCluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/clusters/n/${ToCluster}"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def item = artifactsJsonObject.data.code
+    artifacts.add(item)
+    return artifacts
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]],string(defaultValue: '', description: '请输入目标环境亲和性的键值对，如果不填写，默认使用源环境配置，多个使用逗号”，“区分，例如：key1:value1,key2:value2', name: 'ToK8sAffinityKVPairs', trim: true),string(defaultValue: '1', description: '请输入目标环境服务启动的副本数量', name: 'ToReplicaset', trim: true),
+[$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: true, name: 'FromEnv', randomName: 'choice-parameter-8032909055009506', referencedParameters: 'Department,Cluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects"
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        // artifacts.add(item.destinations.keySet().each())
+        if (Department.equals(item.name)) {
+            for ( key in item.destinations.keySet()) {
+                if (Cluster.equals(key)) {
+                    item.destinations.get(Cluster).each{it -> artifacts +=it }
+                    return artifacts
+                    break;
+                }
+            }
+        }
+    }
+    // return (artifacts.unique())
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: true, name: 'ToEnv', randomName: 'choice-parameter-8032909056623075', referencedParameters: 'Department,ToCluster', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "https://wefocus-api.devops.net/api/v1/argocd/projects" 
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        // artifacts.add(item.destinations.keySet().each())
+        if (Department.equals(item.name)) {
+            for ( key in item.destinations.keySet()) {
+                if (ToCluster.equals(key)) {
+                    item.destinations.get(ToCluster).each{it -> artifacts +=it }
+                    return artifacts
+                    break;
+                }
+            }
+        }
+    }
+    // return (artifacts.unique())
+} catch (Exception e) {
+    print e
+    print "There was a problem fetching the artifacts"
+}''']]], [$class: 'CascadeChoiceParameter', choiceType: 'PT_MULTI_SELECT', description: '', filterLength: 1, filterable: false, name: 'ApplicationSelect', randomName: 'choice-parameter-9234868051950429', referencedParameters: 'Department,FromEnv', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: ''], script: [classpath: [], sandbox: false, script: '''import groovy.json.JsonSlurper
+try {
+    List<String> artifacts = new ArrayList<String>()
+    def artifactsUrl = "http://wefocus-api.devops.net/api/wefocus/v1/get_department_env_parameters_info?department=${Department}&env=${FromEnv}"          
+    def artifactsObjectRaw = ["curl", "-s", "-k", "--url", "${artifactsUrl}"].execute().text
+    def jsonSlurper = new JsonSlurper()
+    def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+    def dataArray = artifactsJsonObject.data
+    for(item in dataArray){
+        artifacts.add(item.applicationName)
+    }
+    artifacts.add(0,'all')
+    return artifacts
+} catch (Exception e) {
+    print "There was a problem fetching the artifacts"
+}''']]]])])
+
+def HelmGitAddr
+def HelmGitGroup
+def HelmGitProj
+def jobParameters = getParameters.getAllEnvParameters("${params.Department}","${FromEnv}")
+def paramsMap = readJSON text: jobParameters
+def allApps = getParameters.getAllEnvAPP("${params.Department}","${FromEnv}")
+
+def appList
+println paramsMap
+
+if ( "${params.ApplicationSelect}" == 'all' ) {
+    appList = allApps
+} else {
+    appList = "${params.ApplicationSelect}".split(',')
+}
+
+appList.each { app ->
+    println app
+}
+node("${params.Cluster}") {
+    if ("${FromEnv}" == "${ToEnv }") {
+        currentBuild.result = 'ABORTED'
+        error('You Must not copy job in the same environment')
+    }
+    appList.each { app ->
+        paramsMap.each { parameters ->
+            if (parameters["applicationName"] == app ) {
+                stage("Print Local Messages") {
+                        println parameters
+                }
+                stage('Prepare Envs') {
+                    sh "echo 'reset and define some variables......'"
+                    // (Kx,Ky,HelmGitAddr,HelmGitGroup,HelmGitProj) = "${parameters.sourceRepo}".split('/')
+                    // sh "echo 'reset and define some variables......'"
+                    env.GitGroup = "${parameters.projectRepo}".split(':|/')[1]
+                    env.GitProject = "${parameters.projectRepo}".split(':|/')[2]
+                    (Kx,Ky,HelmGitAddr,HelmGitGroup,HelmGitProj) = "${parameters.sourceRepo}".split('/')
+                    // 设置项目模块和编译时的模块路径
+                    env.JenkinsFolder = "${parameters.department}-${params.ToCluster}-${env.GitGroup}-${params.ToEnv}"
+                    env.HelmChartValueName = "${parameters.department}-${params.ToClusterCode}-${params.ToEnv}-${parameters.serviceName}"
+                    // argo application 名称
+                    env.ApplicationName = "${parameters.department}-${params.ToClusterCode}-${parameters.serviceName}-${params.ToEnv}"
+                    if ( "${params.ToEnv}" =~ 'release|devk8s|prodvn|sun|devvn|tue|thu|qavn|master' ) {
+                        env.K8sNamespace = "${params.ToEnv}"
+                    } else {
+                        env.K8sNamespace = "${parameters.department}-${params.ToEnv}"
+                    }
+                    env.JenkinsJobName = "${env.JenkinsFolder}/${parameters.department}-${params.ToClusterCode}-${parameters.serviceName}-${parameters.projectType}-${params.ToEnv}"
+                
+                    env.HealthCheck = true
+                    echo "${env.JenkinsJobName}"
+
+                    ArgocdTokens = [
+                        "argocd.devops.net": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NzQzMzMwNDYsImlzcyI6ImFyZ29jZCIsIm5iZiI6MTU3NDMzMzA0Niwic3ViIjoiYWRtaW4ifQ.4t6tLkFYlfRHXSyEl3mnaJnveaiGRIZ6G_v53v_ivr8",
+                        "argocd-nonprod.devops.net": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1NzI5NDA1NDIsImlzcyI6ImFyZ29jZCIsIm5iZiI6MTU3Mjk0MDU0Miwic3ViIjoiYWRtaW4ifQ.zeH2iu1hY5bNSYvwf71Mcp--eIKtVRkaboyVnV_ixWc"
+                    ]
+                    env.ArgocdToken = ArgocdTokens["${parameters.argoAddress}"]
+                    // 替换域名对应的环境地址
+                    env.IngressIntHosts = sh(returnStdout: true, script: "echo ${parameters.ingressInternalHosts} |sed 's/${FromEnv}/${ToEnv}/'").trim()
+                    env.IngressExtHosts = sh(returnStdout: true, script: "echo ${parameters.ingressExternalHosts} |sed 's/${FromEnv}/${ToEnv}/'").trim()
+                    env.IngressPubHosts = sh(returnStdout: true, script: "echo ${parameters.ingressPublicHosts} |sed 's/${FromEnv}/${ToEnv}/'").trim()
+                    env.IngressPriHosts = sh(returnStdout: true, script: "echo ${parameters.ingressPrivateHosts} |sed 's/${FromEnv}/${ToEnv}/'").trim()
+                    if ( "${ToEnv}".matches("test.*") ) {
+                        env.ApolloMetaServer = "http://apollo-meta-fat-apac.svc.devops.net:8080"
+                    } else if ( "${ToEnv}".matches("uat.*") ) {
+                        env.ApolloMetaServer = "http://apollo-meta-uat-apac.svc.devops.net:8090"
+                    } else if ( "${ToEnv}" == "prod")  {
+                        env.ApolloMetaServer = "http://apollo-meta-fat-apac.svc.devops.net:8080"
+                    }
+
+                    if ( "${ToEnv}".matches(".*01|prod")) {
+                        env.ApolloCluster = "vietnam"
+                    } else {
+                        env.ApolloCluster = "${ToEnv}"
+                    }
+                    
+                    if ( "${ToEnv}".matches("test.*") ) {
+                        env.ApolloENV = "FAT"
+                    } else if ( "${ToEnv}".matches("uat.*") ) {
+                        env.ApolloENV = "UAT"
+                    } else if ( "${ToEnv}" == "prod") {
+                        env.ApolloENV = "PRO"
+                    }
+                    // 判断用户是否输入了新的亲和性，留空的话，则使用拷贝项目的配置
+                    if ( "${ToK8sAffinityKVPairs}" ) {
+                        env.AffinityKV  = "${ToK8sAffinityKVPairs}"
+                    } else {
+                        env.AffinityKV =  "${parameters.dedicated}"
+                    }
+                    
+
+                }
+                stage('Create Jenkins Project View') {
+                    jenkinsJobDsl.createView("${parameters.department}")
+                }
+                // create folder for environment
+                stage('Create Jenkins Project Folder') {
+                    jenkinsJobDsl.createFolder("${env.JenkinsFolder}")
+                }
+                // create a job for this project
+                stage('Create Jenkins Pipeline Job') {
+                    jenkinsJobDsl.createJob("${env.JenkinsJobName}","${env.GitProject}")
+                }
+                stage('Create Helm Chart Value') {
+                    dir("helm-chart") {
+                        git([url: "git@${HelmGitAddr}:${HelmGitGroup}/${HelmGitProj}", branch: 'master', credentialsId: 'devopsGit'])
+                        def healthCheck = true
+                        echo "${parameters.projectType}"
+                        copyhelmValue("${parameters.department}","${params.ToEnv}","${parameters.projectType}","${parameters.harborAddress}","${parameters.module}","${parameters.port}","${parameters.apollo}","${env.ApolloENV}","${env.ApolloMetaServer}","${parameters.ingress}","${env.healthCheck}","${parameters.healthCheckUrl}","${parameters.jvm}","${env.HelmChartValueName}","${parameters.affinity}","${env.AffinityKV}","${parameters.k8sService}","${parameters.k8sServiceName}","${parameters.k8sCpuLimit}","${parameters.k8sMemoryLimit}","${parameters.k8sCpuRequest}","${parameters.k8sMemoryRequest}","${parameters.ingressInternalType }","${parameters.ingressPublicType}","${parameters.ingressExternalType}","${env.IngressIntHosts}","${env.IngressPubHosts}","${env.IngressExtHosts}","${parameters.ingressPrivateType}","${env.IngressPriHosts}","${env.ApolloCluster}","${parameters.serviceName}","${parameters.timeZone}","${parameters.pythonRunMethod}","${params.ToReplicaset}")
+                    }
+                }
+                stage('Push New Helm Chart Config') {
+                    dir("helm-chart") {
+                            try{
+                                sshagent(['devopsGit']) {
+                                    sh """
+                                        git add .
+                                        git commit -m 'add ${env.HelmChartValueName} values file'
+                                        git push --set-upstream origin master
+                                        git push -u origin master
+                                    """
+                                }
+                            } catch (Exception e1) {
+                                println("nothing to commit")
+                            }
+                    }
+                }
+                stage("Create ArgoCD application") {
+                    createArgoApp("${parameters.department}","${parameters.projectType}","${parameters.argoAddress}","${env.ApplicationName}","${env.HelmChartValueName}","${params.ToKubernetesAPIServer}","${env.K8sNamespace}","${parameters.sourceRepo}","${env.ArgocdToken}")
+                }
+                stage("Store Parameters ") {
+                    storeParameters.jenkinsInit("${parameters.department}","${params.ToCluster}","${params.ToClusterCode}","${params.ToEnv}","${parameters.sourceRepo}",
+                                    "${params.ToKubernetesAPIServer}","${parameters.projectType}","${parameters.compiler_version}","${parameters.projectRepo}","${parameters.module}",
+                                    "${parameters.serviceName}","${parameters.packageName}","${parameters.port}","${parameters.jvm}","${parameters.healthCheckUrl}",
+                                    "${parameters.ingress}","${parameters.ingressInternalType}","${env.IngressIntHosts}","${parameters.ingressPublicType}","${env.IngressPubHosts}",
+                                    "${parameters.IngressExternalType}","${env.IngressExtHosts}","${parameters.IngressPrivateType}","${env.IngressPriHosts}",
+                                    "${parameters.k8sService}","${parameters.k8sServiceName}","${parameters.affinity}","${env.AffinityKV}","${params.ToReplicaset}",
+                                    "${parameters.k8sCpuRequest}","${parameters.k8sMemoryRequest}","${parameters.k8sCpuLimit}","${parameters.k8sMemoryLimit}","${parameters.apollo}",
+                                    "${env.ApolloMetaServer}","${env.ApolloENV}","${env.ApolloCluster}","${parameters.harborAddress}","${parameters.argoAddress}",
+                                    "${env.JenkinsFolder}","${env.JenkinsJobName}","${env.HelmChartValueName}","${env.ApplicationName}","${env.K8sNamespace}","${parameters.goRootDir}",
+                                    "${env.HealthCheck}","${parameters.timeZone}","${parameters.pythonRunMethod}")
+                }
+            }
+        }
+    }
+}

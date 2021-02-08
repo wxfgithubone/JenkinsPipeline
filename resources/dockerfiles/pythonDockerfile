@@ -1,0 +1,38 @@
+# ---- Base python ----
+FROM ${harbor}/wekube/python:${pythonVersion} AS base
+# Create app directory
+WORKDIR /app
+
+
+# ---- Dependencies ----
+FROM base AS dependencies
+COPY requirements.txt ./
+
+RUN rm /root/.pip/pip.conf && \
+    pip install --upgrade setuptools && \
+    pip install  --user -r requirements.txt -i http://repo.devops.net/repository/pypi-group/simple --trusted-host repo.devops.net
+
+# ---- Copy Files/Build ----
+FROM dependencies AS build
+WORKDIR /app
+COPY . /app
+
+
+# --- Release with Alpine ----
+FROM ${harbor}/wekube/python:${pythonVersion}
+# Create app directory
+WORKDIR /app
+
+COPY --from=dependencies /app/requirements.txt ./
+COPY --from=dependencies /root/.local /root/.local
+
+# Install app dependencies
+# RUN pip install --cache-dir=/root/.cache -r requirements.txt && rm -rf /root/.cache
+COPY --from=build /app/ ./
+
+ENV PATH=/root/.local/bin:\$PATH
+ENV ENV=${projectenv}
+
+USER root
+
+CMD ["python","server.py"]

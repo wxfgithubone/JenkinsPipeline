@@ -1,0 +1,14 @@
+FROM openjdk:8u212-jdk
+
+LABEL maintainer=wangxingmin@devops.net
+ENV APP_HOME /app
+ENV APP_NAME ${app_name}
+ENV JAVA_OPTS=""
+ENV PROJ_ENV ${projectenv}
+ENV JAVA_HOME /usr/local/openjdk-8
+ENV PATH \$JAVA_HOME/bin:\$PATH
+RUN mkdir -p \${APP_HOME}
+WORKDIR \${APP_HOME}
+COPY target/\${APP_NAME} \${APP_HOME}/\${APP_NAME}
+ADD https://devops-wangxingmin.oss-cn-shanghai.aliyuncs.com/scripts/k8s_histore_java_startup.sh /app/startup.sh
+CMD /bin/bash /app/startup.sh \${APP_NAME} \${PROJ_ENV} \${JAVA_OPTS}

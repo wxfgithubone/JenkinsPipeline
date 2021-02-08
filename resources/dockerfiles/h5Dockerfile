@@ -1,0 +1,7 @@
+FROM wcr.devops.net/wekube/nginx:1.14.2-with-try_file-0719-1121
+LABEL maintainer=${creator}
+COPY ./ /usr/share/nginx/html/
+RUN cat /etc/nginx/nginx.conf
+RUN echo "daemon off;">>/etc/nginx/nginx.conf
+RUN cat /etc/nginx/nginx.conf
+CMD ["nginx"]

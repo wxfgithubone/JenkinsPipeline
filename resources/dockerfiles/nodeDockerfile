@@ -1,0 +1,9 @@
+#FROM ${harbor}/wekube/nginx:1.14.2-with-try_file-0719-1121
+FROM ${harbor}/wekube/nginx:1.14.2-try_file-expires
+LABEL maintainer=${creator}
+COPY ./${projectpackage}/ /usr/share/nginx/html/
+RUN cat /etc/nginx/nginx.conf
+RUN echo "daemon off;">>/etc/nginx/nginx.conf
+RUN cat /etc/nginx/nginx.conf
+CMD ["nginx"]
+
